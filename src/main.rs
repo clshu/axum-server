@@ -9,9 +9,11 @@ use axum::{
     serve::Serve,
 };
 use serde::Deserialize;
+use tower_cookies::{CookieManager, CookieManagerLayer};
 use tower_http::services::ServeDir;
 
 mod error;
+mod model;
 mod web;
 
 pub use self::error::{Error, Result};
@@ -21,7 +23,9 @@ async fn main() {
     let routes_all = Router::new()
         .merge(routes_hello())
         .merge(web::routes_login::routes())
+        // layers are executed from bottom to top
         .layer(middleware::map_response(main_response_mapper))
+        .layer(CookieManagerLayer::new())
         .fallback_service(get_service(ServeDir::new("./")));
 
     // region:    --- Start Server
