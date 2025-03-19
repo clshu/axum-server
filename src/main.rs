@@ -4,13 +4,17 @@ use axum::{
     Router,
     extract::{Path, Query},
     response::{Html, IntoResponse},
-    routing::get,
+    routing::{get, get_service},
+    serve::Serve,
 };
 use serde::Deserialize;
+use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() {
-    let routes_all = Router::new().merge(routes_hello());
+    let routes_all = Router::new()
+        .merge(routes_hello())
+        .fallback_service(get_service(ServeDir::new("./")));
 
     // region:    --- Start Server
     // run our app with hyper, listening globally on port 3000
@@ -20,6 +24,7 @@ async fn main() {
     // endregion: --- Start Server
 }
 
+// fn routes_static() -> Router {
 // region:    --- Route Hello
 
 fn routes_hello() -> Router {
