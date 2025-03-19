@@ -3,7 +3,8 @@
 use axum::{
     Router,
     extract::{Path, Query},
-    response::{Html, IntoResponse},
+    middleware,
+    response::{Html, IntoResponse, Response},
     routing::{get, get_service},
     serve::Serve,
 };
@@ -20,6 +21,7 @@ async fn main() {
     let routes_all = Router::new()
         .merge(routes_hello())
         .merge(web::routes_login::routes())
+        .layer(middleware::map_response(main_response_mapper))
         .fallback_service(get_service(ServeDir::new("./")));
 
     // region:    --- Start Server
@@ -30,7 +32,15 @@ async fn main() {
     // endregion: --- Start Server
 }
 
-// fn routes_static() -> Router {
+// region:    --- Response Mapper
+async fn main_response_mapper(res: Response) -> Response {
+    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
+
+    println!();
+    res
+}
+// endregion: --- Response Mapper
+
 // region:    --- Route Hello
 
 fn routes_hello() -> Router {
