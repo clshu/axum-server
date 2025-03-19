@@ -10,6 +10,10 @@ use axum::{
 use serde::Deserialize;
 use tower_http::services::ServeDir;
 
+mod error;
+
+pub use self::error::{Error, Result};
+
 #[tokio::main]
 async fn main() {
     let routes_all = Router::new()
