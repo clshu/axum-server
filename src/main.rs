@@ -11,6 +11,7 @@ use serde::Deserialize;
 use tower_http::services::ServeDir;
 
 mod error;
+mod web;
 
 pub use self::error::{Error, Result};
 
@@ -18,6 +19,7 @@ pub use self::error::{Error, Result};
 async fn main() {
     let routes_all = Router::new()
         .merge(routes_hello())
+        .merge(web::routes_login::routes())
         .fallback_service(get_service(ServeDir::new("./")));
 
     // region:    --- Start Server

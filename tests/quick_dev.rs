@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use anyhow::Result;
+use serde_json::json;
 
 const BASE_URL: &str = "http://localhost:8080";
 
@@ -10,7 +11,29 @@ async fn quick_dev() -> Result<()> {
 
     hc.do_get("/hello2/Mike").await?.print().await?;
 
-    hc.do_get("/src/main.rs").await?.print().await?;
+    let req_log = hc
+        .do_post(
+            "/api/login",
+            json!({
+                "email": "admin@test.com",
+                "password": "admin",
+            }),
+        )
+        .await?
+        .print()
+        .await?;
+
+    let req_log = hc
+        .do_post(
+            "/api/login",
+            json!({
+                "email": "puppy@test.com",
+                "password": "admin",
+            }),
+        )
+        .await?
+        .print()
+        .await?;
 
     Ok(())
 }
