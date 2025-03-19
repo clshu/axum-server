@@ -8,7 +8,7 @@ const BASE_URL: &str = "http://localhost:8080";
 async fn quick_dev() -> Result<()> {
     let hc = httpc_test::new_client(BASE_URL)?;
 
-    hc.do_get("/hello?name=Bob").await?.print().await?;
+    hc.do_get("/hello2/Mike").await?.print().await?;
 
     Ok(())
 }

@@ -10,8 +10,9 @@ use serde::Deserialize;
 
 #[tokio::main]
 async fn main() {
-    let route_hello = Router::new().route("/hello", get(handler_hello));
-    // .route("/hello2/:name", get(handler_hello2));
+    let route_hello = Router::new()
+        .route("/hello", get(handler_hello))
+        .route("/hello2/{name}", get(handler_hello2));
 
     // region:    --- Start Server
     // run our app with hyper, listening globally on port 3000
@@ -36,9 +37,9 @@ async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
 }
 
 // e.g., `/hello2/Mike`
-// async fn handler_hello2(Path(name): Path<String>) -> impl IntoResponse {
-//     println!("->> {:<12} - handler_hello: {name}", "HANDLE ");
+async fn handler_hello2(Path(name): Path<String>) -> impl IntoResponse {
+    println!("->> {:<12} - handler_hello: {name}", "HANDLER");
 
-//     Html(format!("Hello, <strong>{name}</strong>"))
-// }
+    Html(format!("Hello, <strong>{name}</strong>"))
+}
 // endregion: --- HAndlers
