@@ -61,7 +61,7 @@ impl ModelConstroller {
 
         let ticket = store.get_mut(id as usize).and_then(|t| t.take());
 
-        ticket.ok_or(Error::TicketDeleteFailedIdNotFound { id })
+        ticket.ok_or(Error::TicketDeleteFailIdNotFound { id })
     }
 }
 // endregion: --- Model Controller

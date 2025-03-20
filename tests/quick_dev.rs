@@ -11,40 +11,37 @@ async fn quick_dev() -> Result<()> {
 
     hc.do_get("/hello2/Mike").await?.print().await?;
 
-    let req_log = hc
-        .do_post(
-            "/api/login",
-            json!({
-                "email": "admin@test.com",
-                "password": "admin",
-            }),
-        )
-        .await?
-        .print()
-        .await?;
+    hc.do_post(
+        "/api/login",
+        json!({
+            "email": "admin@test.com",
+            "password": "admin",
+        }),
+    )
+    .await?
+    .print()
+    .await?;
 
-    let req_login = hc
-        .do_post(
-            "/api/login",
-            json!({
-                "email": "puppy@test.com",
-                "password": "admin",
-            }),
-        )
-        .await?
-        .print()
-        .await?;
+    // hc.do_post(
+    //     "/api/login",
+    //     json!({
+    //         "email": "puppy@test.com",
+    //         "password": "admin",
+    //     }),
+    // )
+    // .await?
+    // .print()
+    // .await?;
 
-    let req_tickets = hc
-        .do_post(
-            "/api/tickets",
-            json!({
-                "title": "Ticket 1",
-            }),
-        )
-        .await?
-        .print()
-        .await?;
+    hc.do_post(
+        "/api/tickets",
+        json!({
+            "title": "Ticket 1",
+        }),
+    )
+    .await?
+    .print()
+    .await?;
 
     hc.do_get("/api/tickets").await?.print().await?;
 

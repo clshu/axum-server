@@ -8,8 +8,11 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
     LoginFail,
 
+    // Auth Error
+    AuthFailNoAuthTokenCookie,
+
     // -- Model Errors
-    TicketDeleteFailedIdNotFound { id: u64 },
+    TicketDeleteFailIdNotFound { id: u64 },
 }
 
 // Don't expose server errors to the client.
