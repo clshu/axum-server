@@ -19,10 +19,14 @@ mod web;
 pub use self::error::{Error, Result};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    // Initialize the Model Controller
+    let mc = model::ModelConstroller::new().await?;
+
     let routes_all = Router::new()
         .merge(routes_hello())
         .merge(web::routes_login::routes())
+        .nest("/api", web::routes_tickets::routes(mc.clone()))
         // layers are executed from bottom to top
         .layer(middleware::map_response(main_response_mapper))
         .layer(CookieManagerLayer::new())
@@ -33,7 +37,10 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     println!("->> Listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, routes_all).await.unwrap();
+
     // endregion: --- Start Server
+
+    Ok(())
 }
 
 // region:    --- Response Mapper
