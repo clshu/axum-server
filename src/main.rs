@@ -60,15 +60,8 @@ async fn main_response_mapper(res: Response) -> Response {
 
     // Get the error from the response
     let service_error = res.extensions().get::<Error>();
-    // println!(
-    //     "->> {:<12} - service_error: {:?}",
-    //     "RES_MAPPER", service_error
-    // );
+
     let client_status_error = service_error.map(|e| e.cinet_status_and_error());
-    // println!(
-    //     "->> {:<12} - client_error: {:?}",
-    //     "RES_MAPPER", client_status_error
-    // );
 
     // If client error, create a response with the error
     let error_response = client_status_error.as_ref().map(|(status, client_error)| {
@@ -77,14 +70,13 @@ async fn main_response_mapper(res: Response) -> Response {
             "type": client_error.as_ref(),
             "req_uuid": uuid.to_string(),
         }});
-        println!("->> {:<12} - {client_error_body}", "RES_MAPPER");
+        println!("  ->> client_error_body - {client_error_body}");
 
         (*status, Json(client_error_body)).into_response()
     });
-    // println!(
-    //     "->> {:<12} - error_response: {:?}",
-    //     "RES_MAPPER", error_response
-    // );
+
+    println!("  ->> server log line - {uuid} - Error: {service_error:?}");
+
     println!();
     error_response.unwrap_or(res)
 }
