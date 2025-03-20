@@ -4,7 +4,7 @@ use axum::response::{IntoResponse, Response};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, strum_macros::AsRefStr)]
 pub enum Error {
     LoginFail,
 
@@ -24,34 +24,43 @@ pub enum Error {
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         println!("->> {:<12} - {self:?}", "INTO_RES");
-        (StatusCode::INTERNAL_SERVER_ERROR, "UNHANDLED_CLINET_ERROR").into_response()
+
+        // A placeholder response
+        let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
+
+        // Insert Error into response
+        response.extensions_mut().insert(self);
+
+        response
     }
 }
 
-// region:    --- Custom
+impl Error {
+    pub fn cinet_status_and_error(&self) -> (StatusCode, ClientError) {
+        match self {
+            Self::LoginFail => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
+            //    Auth
+            Self::AuthFailNoAuthTokenCookie
+            | Self::AuthFailTokenExpired
+            | Self::AuthFailTokenInvalid
+            | Self::AuthFailTokenWrongFormat
+            | Self::AuthFailCtxNotInRequestExtensions => {
+                (StatusCode::FORBIDDEN, ClientError::NO_AUTH)
+            }
 
-// impl Error {
-//     pub fn custom(val: impl std::fmt::Display) -> Self {
-//         Self::Custom(val.to_string())
-//     }
-// }
+            //    Model
+            Self::TicketDeleteFailIdNotFound { .. } => {
+                (StatusCode::BAD_REQUEST, ClientError::INVALID_PARAMS)
+            }
+        }
+    }
+}
 
-// impl From<&str> for Error {
-//     fn from(val: &str) -> Self {
-//         Self::Custom(val.to_string())
-//     }
-// }
-
-// endregion: --- Custom
-
-// region:    --- Error Boilerplate
-
-// impl std::fmt::Display for Error {
-//     fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
-//         write!(fmt, "{self:?}")
-//     }
-// }
-
-// impl std::error::Error for Error {}
-
-// endregion: --- Error Boilerplate
+#[allow(non_camel_case_types)]
+#[derive(Debug, strum_macros::AsRefStr)]
+pub enum ClientError {
+    LOGIN_FAIL,
+    NO_AUTH,
+    INVALID_PARAMS,
+    SERVICE_ERROR,
+}
