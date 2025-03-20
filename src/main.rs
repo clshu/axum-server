@@ -2,24 +2,28 @@
 
 use axum::{
     Json, Router,
-    extract::{Path, Query},
+    extract::{Path, Query, Request},
+    http::{Method, Uri},
     middleware,
     response::{Html, IntoResponse, Response},
     routing::{get, get_service},
-    serve::Serve,
 };
 use serde::Deserialize;
 use serde_json::json;
+use tower::ServiceBuilder;
 use tower_cookies::{CookieManager, CookieManagerLayer};
 use tower_http::services::ServeDir;
 use uuid::Uuid;
 
 mod ctx;
 mod error;
+mod log;
 mod model;
 mod web;
 
-pub use self::error::{Error, Result};
+use crate::ctx::Ctx;
+
+pub use self::error::{ClientError, Error, Result};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -30,11 +34,16 @@ async fn main() -> Result<()> {
         .route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
 
     let routes_all = Router::new()
+        .layer(middleware::from_fn(web::mw_auth::mw_req_info))
         .merge(routes_hello())
         .merge(web::routes_login::routes())
         .nest("/api", routes_apis)
         // layers are executed from bottom to top
-        .layer(middleware::map_response(main_response_mapper))
+        .layer(
+            ServiceBuilder::new()
+                .layer(middleware::map_response(main_response_mapper))
+                .layer(middleware::from_fn(web::mw_auth::mw_req_info)),
+        )
         .layer(middleware::from_fn_with_state(
             mc.clone(),
             web::mw_auth::mw_ctx_resolver,
@@ -54,11 +63,29 @@ async fn main() -> Result<()> {
 }
 
 // region:    --- Response Mapper
+/**
+ * The response mapper is a middleware that is executed after the request handler.
+ * From aumx 0.8, it can aceess response only, not the request through extractors.
+ * Create another middleware mw_req_info to log the request info in the extensions.
+ * The response mapper can access the request info from the extensions.
+ */
 async fn main_response_mapper(res: Response) -> Response {
     println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
     let uuid = Uuid::new_v4();
 
-    // Get the error from the response
+    let req_method = res
+        .extensions()
+        .get::<Method>()
+        .cloned()
+        .unwrap_or_default();
+    let uri = res.extensions().get::<Uri>().cloned().unwrap_or_default();
+    let ctx = res
+        .extensions()
+        .get::<Option<Ctx>>()
+        .cloned()
+        .unwrap_or_default();
+
+    // // Get the error from the response
     let service_error = res.extensions().get::<Error>();
 
     let client_status_error = service_error.map(|e| e.cinet_status_and_error());
@@ -75,7 +102,9 @@ async fn main_response_mapper(res: Response) -> Response {
         (*status, Json(client_error_body)).into_response()
     });
 
-    println!("  ->> server log line - {uuid} - Error: {service_error:?}");
+    // Build and log the request log line
+    let client_error = client_status_error.unzip().1;
+    log::log_request(uuid, req_method, uri, ctx, service_error, client_error).await;
 
     println!();
     error_response.unwrap_or(res)

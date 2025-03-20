@@ -50,7 +50,12 @@ pub async fn mw_ctx_resolver(
     // It's a store by types
     req.extensions_mut().insert(result_ctx.clone());
 
-    Ok(next.run(req).await)
+    let mut res = next.run(req).await;
+    // insert the ctx into the response extensions for logging}
+    let ctx = result_ctx.clone().ok();
+    res.extensions_mut().insert(ctx.clone());
+
+    Ok(res)
 }
 
 // Parse a token of format `user-[user-id].[exp].[sign]`
@@ -61,6 +66,22 @@ fn parse_token(token: String) -> Result<(u64, String, String)> {
     let user_id: u64 = user_id.parse().map_err(|_| Error::AuthFailTokenInvalid)?;
 
     Ok((user_id, exp.to_string(), sign.to_string()))
+}
+
+pub async fn mw_req_info(mut req: Request, next: Next) -> Result<Response> {
+    println!("->> {:<12} - mw_req_info", "MIDDLEWARE");
+
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+    // println!("  ->> - Method: {:?}", method);
+    // println!("  ->> - URI: {:?}", uri);
+
+    let mut res = next.run(req).await;
+    // Insert method and uri into response extensions
+    res.extensions_mut().insert(method.clone());
+    res.extensions_mut().insert(uri.clone());
+
+    Ok(res)
 }
 
 /**

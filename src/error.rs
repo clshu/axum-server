@@ -1,10 +1,11 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-// use derive_more::From;
+use serde::Serialize;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Clone, strum_macros::AsRefStr)]
+#[derive(Debug, Clone, Serialize, strum_macros::AsRefStr)]
+#[serde(tag = "type", content = "data")]
 pub enum Error {
     LoginFail,
 
@@ -16,6 +17,7 @@ pub enum Error {
     AuthFailCtxNotInRequestExtensions,
 
     // -- Model Errors
+    // tag: TicketDeleteFailIdNotFound, content: { id: u64 }
     TicketDeleteFailIdNotFound { id: u64 },
 }
 
