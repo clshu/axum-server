@@ -22,7 +22,7 @@ pub use self::error::{Error, Result};
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize the Model Controller
-    let mc = model::ModelConstroller::new().await?;
+    let mc = model::ModelController::new().await?;
 
     let routes_apis = web::routes_tickets::routes(mc.clone())
         .route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
@@ -33,6 +33,10 @@ async fn main() -> Result<()> {
         .nest("/api", routes_apis)
         // layers are executed from bottom to top
         .layer(middleware::map_response(main_response_mapper))
+        .layer(middleware::from_fn_with_state(
+            mc.clone(),
+            web::mw_auth::mw_ctx_resolver,
+        ))
         .layer(CookieManagerLayer::new())
         .fallback_service(get_service(ServeDir::new("./")));
 

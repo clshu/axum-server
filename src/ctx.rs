@@ -25,38 +25,38 @@ impl Ctx {
     }
 }
 
-/**
- * Extractor
- * Extract AUTH_TOKEN cookie and parse it to get user_id
- * Don't need async_trait anymore
- */
-impl<S: Send + Sync> FromRequestParts<S> for Ctx {
-    type Rejection = Error;
+// /**
+//  * Extractor
+//  * Extract AUTH_TOKEN cookie and parse it to get user_id
+//  * Don't need async_trait anymore
+// //  */
+// impl<S: Send + Sync> FromRequestParts<S> for Ctx {
+//     type Rejection = Error;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self> {
-        println!("->> {:<12} - Ctx", "EXTRACTOR");
+//     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self> {
+//         println!("->> {:<12} - Ctx", "EXTRACTOR");
 
-        // Use cookies extractor
-        let cookies = Cookies::from_request_parts(parts, state).await.unwrap();
+//         // Use cookies extractor
+//         let cookies = Cookies::from_request_parts(parts, state).await.unwrap();
 
-        let auth_token = cookies.get(AUTH_TOKEN).map(|c| c.value().to_string());
+//         let auth_token = cookies.get(AUTH_TOKEN).map(|c| c.value().to_string());
 
-        let (user_id, exp, sign) = auth_token
-            .ok_or(Error::AuthFailNoAuthTokenCookie)
-            .and_then(parse_token)?;
+//         let (user_id, exp, sign) = auth_token
+//             .ok_or(Error::AuthFailNoAuthTokenCookie)
+//             .and_then(parse_token)?;
 
-        // TODO: Real auth-token parsing and validation
+//         // TODO: Real auth-token parsing and validation
 
-        Ok(Ctx::new(user_id))
-    }
-}
+//         Ok(Ctx::new(user_id))
+//     }
+// }
 
-// Parse a token of format `user-[user-id].[exp].[sign]`
-fn parse_token(token: String) -> Result<(u64, String, String)> {
-    let (_whole, user_id, exp, sign) = regex_captures!(r#"^user-(\d+)\.(.+)\.(.+)"#, &token)
-        .ok_or(Error::AuthFailTokenWrongFormat)?;
+// // Parse a token of format `user-[user-id].[exp].[sign]`
+// fn parse_token(token: String) -> Result<(u64, String, String)> {
+//     let (_whole, user_id, exp, sign) = regex_captures!(r#"^user-(\d+)\.(.+)\.(.+)"#, &token)
+//         .ok_or(Error::AuthFailTokenWrongFormat)?;
 
-    let user_id: u64 = user_id.parse().map_err(|_| Error::AuthFailTokenInvalid)?;
+//     let user_id: u64 = user_id.parse().map_err(|_| Error::AuthFailTokenInvalid)?;
 
-    Ok((user_id, exp.to_string(), sign.to_string()))
-}
+//     Ok((user_id, exp.to_string(), sign.to_string()))
+// }
